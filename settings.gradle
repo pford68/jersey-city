@@ -1,0 +1,2 @@
+rootProject.name = 'jersey-city'
+include 'city-service'
