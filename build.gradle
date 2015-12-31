@@ -20,7 +20,7 @@ allprojects {
     }
 }
 
-project(':almagest-service'){
+project(':city-service'){
     apply plugin: 'war'
 
     def restAssuredVersion = '2.8.0'
