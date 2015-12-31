@@ -1,0 +1,40 @@
+apply plugin: 'jetty'
+apply plugin: 'idea'
+
+/*
+import org.gradle.api.plugins.jetty.internal.Monitor;
+            [jettyRun, jettyRunWar]*.doLast {
+if (getStopPort() != null && getStopPort() > 0 && getStopKey() != null) {
+    Monitor monitor = new Monitor(getStopPort(), getStopKey(), server.getProxiedObject());
+    monitor.start();
+}
+}
+ */
+
+// Jetty settings
+httpPort = 8080
+stopPort = 9080
+stopKey = "stopKey"
+
+def restAssuredVersion = '2.8.0'
+
+sourceSets {
+    integrationTest {
+        java {
+            compileClasspath += main.output + test.output
+            runtimeClasspath += main.output + test.output
+            srcDir file('src/integration-test/java')
+        }
+        resources.srcDir file('src/integration-test/resources')
+    }
+}
+
+configurations {
+    integrationTestCompile.extendsFrom testCompile
+    integrationTestRuntime.extendsFrom testRuntime
+}
+
+dependencies {
+    integrationTestCompile "com.jayway.restassured:rest-assured:$restAssuredVersion"
+    integrationTestCompile "com.jayway.restassured:json-path:$restAssuredVersion"
+}

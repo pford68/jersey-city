@@ -15,7 +15,7 @@ public class TodoResourceIT {
 
     @Before
     public void setUp() {
-        RestAssured.baseURI = "http://localhost:8080/almagest-service";
+        RestAssured.baseURI = "http://localhost:8080/city-service";
         RestAssured.basePath = "/rest";
     }
 
