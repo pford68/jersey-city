@@ -6,11 +6,8 @@ gradle-app.setting
 
 # Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
 !gradle-wrapper.jar
-<<<<<<< HEAD
 
 
 ## IntelliJ
 **/*.iml
 .idea/*
-=======
->>>>>>> 0c551fb527d552b37444eba45fb358105e9b45f7
