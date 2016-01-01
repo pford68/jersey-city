@@ -102,7 +102,7 @@ project(':city-service'){
         beforeTest { descriptor ->
             logger.lifecycle("Running test: " + descriptor)
         }
-        
+
         // Ensures that integration tests are always run when invoked, regardless of whether changes were made.
         outputs.upToDateWhen { false }
     }
