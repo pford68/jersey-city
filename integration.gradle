@@ -1,0 +1,126 @@
+/*
+ * Settings and tasks required to support integration tests and development with a local server.
+ * It includes an embedded server, which starts when the tests are run and stops after they finish.
+ * The server can be used separately for local development.
+ */
+import org.gradle.api.plugins.jetty.internal.Monitor
+
+apply plugin: 'java'
+apply plugin: 'jetty'
+apply plugin: 'idea'
+
+def restAssuredVersion = '2.8.0'
+
+// Jetty settings
+httpPort = 8080
+stopPort = 9080
+stopKey = "stopKey"
+
+
+// Creating a new sourceSet because you should move your integration tests to a separate directory.
+sourceSets {
+    integrationTest {
+        java {
+            compileClasspath += main.output + test.output
+            runtimeClasspath += main.output + test.output
+            srcDir file('src/integration-test/java')
+        }
+        resources.srcDir file('src/integration-test/resources')
+    }
+}
+
+
+
+// These configurations were created automatically be the sourceSet above.
+configurations {
+    integrationTestCompile.extendsFrom testCompile
+    integrationTestRuntime.extendsFrom testRuntime
+}
+
+
+dependencies {
+    compile "org.glassfish.jersey.containers:jersey-container-servlet:$jerseyVersion"
+    compile "org.glassfish.jersey.media:jersey-media-json-jackson1:$jerseyVersion"
+    integrationTestCompile "com.jayway.restassured:rest-assured:$restAssuredVersion"
+    integrationTestCompile "com.jayway.restassured:json-path:$restAssuredVersion"
+}
+
+
+
+/*
+This tells IntelliJ that the new integrationTestCompile configuration belongs on the classpath,
+and dependencies marked with integrationTestCompile should be fetched.  Without this, IntelliJ's
+Gradle plugin will not fetch those dependencies, and IntelliJ will indicate errors in the classes
+that have them.
+*/
+idea {
+    module {
+        scopes.TEST.plus += [ configurations.integrationTestCompile ]
+    }
+}
+
+
+
+//See https://issues.gradle.org/browse/GRADLE-2263 (the bug report and workaround)
+[jettyRun, jettyRunWar]*.doLast {
+    /**
+     * THIS IS A WORKAROUND! THE CURRENT VERSION OF THIS TASK DOESN'T START A WATCHER IN DAEMON MODE
+     *
+     * If starting the monitor fails, it may be because the jetty task was updated to fix this issue
+     * When that happens, we shouldn't need the custom task any more
+     *
+     * Copied From: AbstractJettyRunTask
+     */
+    if (getStopPort() != null && getStopPort() > 0 && getStopKey() != null) {
+        Monitor monitor = new Monitor(getStopPort(), getStopKey(), server.getProxiedObject());
+        monitor.start();
+    }
+}
+
+
+
+/*
+Runs integration tests, starting the server before beginning the tests and stopping it after all are finished.
+
+We start the server in daemon mode before the task beings (doFirst).  This is necessary because otherwise
+jettyRun/jettyRunWar is a blocking action.  However, using daemon mode leads to the very issue referencd
+above, which requires the workaround used above.
+ */
+task integrationTest(type: Test) {
+    doFirst {
+        println "Starting integration tests..."
+
+        [jettyRun, jettyRunWar]*.with {
+            daemon = true
+        }
+        jettyRun.execute()
+    }
+    doLast {
+        jettyStop.execute()
+        println "Finished integration tests"
+    }
+
+    testClassesDir = sourceSets.integrationTest.output.classesDir
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    testLogging.showStandardStreams = true
+
+    // Before each test, log the execution detail for clarity
+    beforeTest { descriptor ->
+        logger.lifecycle("Running test: " + descriptor)
+    }
+
+    // Ensures that integration tests are always run when invoked, regardless of whether changes were made.
+    outputs.upToDateWhen { false }
+}
+
+
+//Ensure that the check task fails the build if there are failing integration tests.
+check.dependsOn integrationTest
+//Ensure that our unit tests are run before our integration tests
+integrationTest.mustRunAfter test
+
+
+// Sends the integration test results to their own directory, or else they'll overwrite unit test reports.
+tasks.withType(Test) {
+    reports.html.destination = file("${reporting.baseDir}/${name}")
+}
