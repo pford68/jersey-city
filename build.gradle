@@ -1,4 +1,3 @@
-
 import org.gradle.api.plugins.jetty.internal.Monitor
 
 group 'com.macedon.almagest'
@@ -97,6 +96,13 @@ project(':city-service'){
 
         testClassesDir = sourceSets.integrationTest.output.classesDir
         classpath = sourceSets.integrationTest.runtimeClasspath
+        testLogging.showStandardStreams = true
+
+        // Before each test, log the execution detail for clarity
+        beforeTest { descriptor ->
+            logger.lifecycle("Running test: " + descriptor)
+        }
+        
         // Ensures that integration tests are always run when invoked, regardless of whether changes were made.
         outputs.upToDateWhen { false }
     }
