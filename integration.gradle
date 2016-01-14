@@ -82,7 +82,7 @@ idea {
 /*
 Runs integration tests, starting the server before beginning the tests and stopping it after all are finished.
 
-We start the server in daemon mode before the task beings (doFirst).  This is necessary because otherwise
+We start the server in daemon mode before the task begins (doFirst).  This is necessary because otherwise
 jettyRun/jettyRunWar is a blocking action.  However, using daemon mode leads to the very issue referencd
 above, which requires the workaround used above.
  */
