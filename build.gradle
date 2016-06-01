@@ -23,6 +23,10 @@ allprojects {
 project(':city-service'){
     apply plugin: 'war'
     apply from: '../integration.gradle'
+
+    war {
+        archiveName 'jersey-city.war'
+    }
 }
 
 task wrapper(type:  Wrapper){
